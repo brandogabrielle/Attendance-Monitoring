@@ -1,50 +1,43 @@
 from flask import Flask, request, jsonify, render_template
 import pandas as pd
-from datetime import datetime
+import os
+import json
 
-app = Flask(__name__)  # ← THIS is what's missing
+app = Flask(__name__)
 
-# Load your student Excel file
+# Load the Excel file once
 df = pd.read_excel("/Users/brandogabrielle/Documents/Capstone/Attendance-Monitoring/backend/generated_student_data.xlsx")
 
-# List to store attendance logs
-attendance_log = []
-
+@app.route('/')
+def index():
+    return render_template('scanner.html')  # This will load your scanner page
 
 @app.route('/attend', methods=['POST'])
 def attend():
-    data = request.get_json()
+    data = request.json
+    print("Received data:", data)  # 👈 Add this line to see what's coming in
 
-    try:
-        student_id = str(data.get("student_id", "")).strip()
-        last_name = str(data.get("last_name", "")).strip().lower()
-        first_name = str(data.get("first_name", "")).strip().lower()
+    student_id = data.get("student_id")
+    last_name = data.get("last_name")
+    first_name = data.get("first_name")
 
-        # Ensure Excel is processed the same way
-        df['student_id'] = df['student_id'].astype(str).str.strip()
-        df['last_name'] = df['last_name'].astype(str).str.strip().str.lower()
-        df['first_name'] = df['first_name'].astype(str).str.strip().str.lower()
+    if student_id is None or last_name is None or first_name is None:
+        return jsonify({"status": "error", "message": "Incomplete data"}), 400
 
-        # Now match all fields
-        student = df[
-            (df['student_id'] == student_id) &
-            (df['last_name'] == last_name) &
-            (df['first_name'] == first_name)
-        ]
+    # ... rest of the code stays the same ...
 
-        if student.empty:
-            return "❌ Student not found", 404
+    match = df[
+        (df['student_id'].astype(str).str.strip() == str(student_id).strip()) &
+        (df['last_name'].str.lower().str.strip() == last_name.lower().strip()) &
+        (df['first_name'].str.lower().str.strip() == first_name.lower().strip())
+    ]
 
-        record = {
-            "student_id": student_id,
-            "name": f"{student.iloc[0]['last_name'].title()}, {student.iloc[0]['first_name'].title()}",
-            "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        }
+    if not match.empty:
+        return jsonify({"status": "success", "message": "Attendance recorded!"})
+    else:
+        return jsonify({"status": "error", "message": "Student not found"}), 404
 
-        attendance_log.append(record)
-        print("✅ Attendance logged:", record)
-        return f"✅ Attendance recorded for {record['name']}"
+if __name__ == '__main__':
+    app.run(debug=True)
 
-    except Exception as e:
-        print("⚠️ Error during attendance check:", e)
-        return "❌ Invalid input or server error", 500
+#use this to run the app python /Users/brandogabrielle/Documents/Capstone/Attendance-Monitoring/backend/main.py
