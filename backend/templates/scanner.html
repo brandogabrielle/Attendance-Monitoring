@@ -1,0 +1,38 @@
+<!-- templates/scanner.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>QR Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+  <h2>QR Code Attendance Scanner</h2>
+  <div id="reader" style="width: 300px;"></div>
+  <div id="result"></div>
+
+  <script>
+    function onScanSuccess(decodedText, decodedResult) {
+      document.getElementById('result').innerText = "Scanned: " + decodedText;
+
+      fetch('/attend', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ student_id: decodedText })
+      })
+      .then(response => response.text())
+      .then(result => {
+        alert(result);
+      })
+      .catch(error => {
+        alert("Error: " + error);
+      });
+    }
+
+    let html5QrcodeScanner = new Html5QrcodeScanner(
+      "reader", { fps: 10, qrbox: 250 });
+    html5QrcodeScanner.render(onScanSuccess);
+  </script>
+</body>
+</html>
