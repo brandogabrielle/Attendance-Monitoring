@@ -11,28 +11,34 @@
   <div id="result"></div>
 
   <script>
-    function onScanSuccess(decodedText, decodedResult) {
-      document.getElementById('result').innerText = "Scanned: " + decodedText;
+  function onScanSuccess(decodedText, decodedResult) {
+    document.getElementById('result').innerText = "Scanned: " + decodedText;
+
+    try {
+      const data = JSON.parse(decodedText); // ⬅️ Parse JSON from QR
 
       fetch('/attend', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ student_id: decodedText })
+        body: JSON.stringify(data)
       })
       .then(response => response.text())
       .then(result => {
         alert(result);
       })
       .catch(error => {
-        alert("Error: " + error);
+        alert("⚠️ Error: " + error);
       });
+    } catch (e) {
+      alert("❌ Invalid QR Code format. Expected JSON.");
     }
+  }
 
-    let html5QrcodeScanner = new Html5QrcodeScanner(
-      "reader", { fps: 10, qrbox: 250 });
-    html5QrcodeScanner.render(onScanSuccess);
-  </script>
+  let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+  html5QrcodeScanner.render(onScanSuccess);
+</script>
+
 </body>
 </html>
