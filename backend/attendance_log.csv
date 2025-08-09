@@ -1,0 +1,4 @@
+student_id,first_name,last_name,timestamp,class_section,subject,faculty_id
+22-17-05,joshua,harris,2025-08-07T17:52:55.825176,None,None,None
+22-17-10,kevin,madden,2025-08-07T17:53:21.470066,BSCS 2A,Introduction to Programming,2
+22-17-19,scott,woods,2025-08-07T17:53:35.491862,BSIT 3A,Networking Basics,1

@@ -7,15 +7,32 @@
 </head>
 <body>
   <h2>QR Code Attendance Scanner</h2>
+<h2>📘 Scanning for:</h2>
+<p><strong>Faculty ID:</strong> {{ faculty_id }}</p>
+<p><strong>Class Section:</strong> {{ section }}</p>
+<p><strong>Subject:</strong> {{ subject }}</p>
+
+
+<div id="reader" style="width: 300px;"></div>
+<p id="result">Waiting for QR code...</p>
+
   <div id="reader" style="width: 300px;"></div>
   <div id="result"></div>
-
+  <br>
+<a href="/select_class"><button>🔙 Change Class/Subject</button></a>
+  <br>
+<a href="/dashboard"><button>🔙 Back to Dashboard</button></a>
   <script>
   function onScanSuccess(decodedText, decodedResult) {
     document.getElementById('result').innerText = "Scanned: " + decodedText;
 
     try {
       const data = JSON.parse(decodedText); // ⬅️ Parse JSON from QR
+
+      // ✅ Add context from Flask (injected via Jinja2)
+      data.faculty_id = "{{ faculty_id }}";
+      data.class_section = "{{ section }}";
+      data.subject = "{{ subject }}";
 
       fetch('/attend', {
         method: 'POST',
@@ -39,6 +56,7 @@
   let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
   html5QrcodeScanner.render(onScanSuccess);
 </script>
+
 
 </body>
 </html>

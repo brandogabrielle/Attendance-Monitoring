@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Class & Subject</title>
+    <script>
+        function updateSubjects() {
+            const facultyId = document.getElementById('faculty').value;
+            const sectionSelect = document.getElementById('section');
+            const subjectSelect = document.getElementById('subject');
+
+            // Reset
+            sectionSelect.innerHTML = '';
+            subjectSelect.innerHTML = '';
+
+            if (facultyId && data[facultyId]) {
+                const sections = Object.keys(data[facultyId]['subjects']);
+                sections.forEach(section => {
+                    const opt = document.createElement('option');
+                    opt.value = section;
+                    opt.text = section;
+                    sectionSelect.appendChild(opt);
+                });
+
+                // Load first section's subjects by default
+                updateSubjectList(sections[0]);
+            }
+        }
+
+        function updateSubjectList(section) {
+            const facultyId = document.getElementById('faculty').value;
+            const subjectSelect = document.getElementById('subject');
+
+            subjectSelect.innerHTML = '';
+
+            if (facultyId && data[facultyId] && data[facultyId]['subjects'][section]) {
+                const subjects = data[facultyId]['subjects'][section];
+                subjects.forEach(subject => {
+                    const opt = document.createElement('option');
+                    opt.value = subject;
+                    opt.text = subject;
+                    subjectSelect.appendChild(opt);
+                });
+            }
+        }
+
+        function handleSubmit() {
+            const faculty = document.getElementById('faculty').value;
+            const section = document.getElementById('section').value;
+            const subject = document.getElementById('subject').value;
+
+            if (!faculty || !section || !subject) {
+                alert("Please select all fields.");
+                return false;
+            }
+
+            // Redirect to scanner with context
+            window.location.href = `/scan?faculty=${faculty}&section=${section}&subject=${subject}`;
+            return false;
+        }
+
+        const data = {{ faculty_data|tojson }};
+    </script>
+</head>
+<body onload="updateSubjects()">
+    <h1>Select Class & Subject</h1>
+    <form onsubmit="return handleSubmit()">
+        <label for="faculty">Faculty:</label>
+        <select id="faculty" name="faculty" onchange="updateSubjects()">
+            {% for id, info in faculty_data.items() %}
+                <option value="{{ id }}">{{ info.name }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        <label for="section">Class Section:</label>
+        <select id="section" name="section" onchange="updateSubjectList(this.value)">
+            <!-- Dynamically filled -->
+        </select><br><br>
+
+        <label for="subject">Subject:</label>
+        <select id="subject" name="subject">
+            <!-- Dynamically filled -->
+        </select><br><br>
+
+        <button type="submit">📷 Start Attendance</button>
+    </form>
+</body>
+</html>

@@ -1,11 +1,16 @@
 from flask import Flask, request, jsonify, render_template
 import pandas as pd
+from flask import request
+
 
 app = Flask(__name__)
 
 @app.route('/scan')
 def scan():
-    return render_template('scanner.html')
+    faculty_id = request.args.get('faculty')
+    section = request.args.get('section')
+    subject = request.args.get('subject')
+    return render_template('scanner.html', faculty_id=faculty_id, section=section, subject=subject)
 
 @app.route('/attend', methods=['POST'])
 def attend():
