@@ -6,14 +6,24 @@ import time
 
 faculty_bp = Blueprint('faculty', __name__, url_prefix='/faculty')
 
-# Store recent scans for cooldown
-recent_scans = {}
+# Attendance session state
+current_session = {
+    "subject": None,
+    "section": None,
+    "scanned_ids": set(),  # IDs scanned in this session
+    "last_scanned_id": None
+}
+
+# Store recent scans for display
 scan_history = []
-COOLDOWN_SECONDS = 5  # seconds between allowed duplicate scans
 
 # Absolute path to the Excel file
-excel_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'generated_student_data.xlsx')
+excel_path = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    'generated_student_data.xlsx'
+)
 
+# Faculty dashboard
 @faculty_bp.route('/dashboard')
 def faculty_dashboard():
     return render_template(
@@ -24,29 +34,56 @@ def faculty_dashboard():
         subject=request.args.get('subject')
     )
 
+# Start attendance session
+@faculty_bp.route('/start_session', methods=['POST'])
+def start_session():
+    data = request.get_json()
+    subject = data.get("subject")
+    section = data.get("section")
+
+    if not subject or not section:
+        return jsonify({"status": "error", "message": "Subject and section are required"}), 400
+
+    # Reset session state
+    current_session["subject"] = subject
+    current_session["section"] = section
+    current_session["scanned_ids"].clear()
+    current_session["last_scanned_id"] = None
+
+    scan_history.clear()
+
+    return jsonify({
+        "status": "success",
+        "message": f"Attendance started for {subject} - {section}"
+    })
+
+# Record attendance
 @faculty_bp.route('/attend', methods=['POST'])
 def attend():
     data = request.get_json()
     if not data:
         return jsonify({"status": "error", "message": "Invalid request data"}), 400
 
-    student_id = str(data.get('student_id')).strip()
-    now = time.time()
+    student_id = str(data.get('student_id', '')).strip()
+    subject = data.get("subject")
+    section = data.get("section")
 
-    if not student_id:
-        return jsonify({"status": "error", "message": "Missing student ID"}), 400
+    if not student_id or not subject or not section:
+        return jsonify({"status": "error", "message": "Missing required data"}), 400
 
-    # Cooldown check per student
-    if student_id in recent_scans and now - recent_scans[student_id] < COOLDOWN_SECONDS:
-        scan_history.insert(0, (time.strftime('%I:%M:%S %p'), student_id, "Duplicate Scan", "cooldown"))
-        scan_history[:] = scan_history[:5]
-        return jsonify({
-            "status": "cooldown",
-            "message": "⏳ Duplicate scan ignored (cooldown)",
-            "recent_scans": scan_history
-        }), 429
+    # Ensure a session is active
+    if current_session["subject"] != subject or current_session["section"] != section:
+        return jsonify({"status": "error", "message": "No active session for this subject/section"}), 400
 
-    # Check if Excel exists
+    # 1️⃣ Ignore if same as last scanned QR (prevents camera spam)
+    if student_id == current_session["last_scanned_id"]:
+        return jsonify({"status": "ignored", "message": "Same QR as last scan", "recent_scans": scan_history}), 200
+
+    # 2️⃣ Ignore if already scanned in this session
+    if student_id in current_session["scanned_ids"]:
+        return jsonify({"status": "ignored", "message": "Already scanned in this session", "recent_scans": scan_history}), 200
+
+    # Load Excel
     if not os.path.exists(excel_path):
         return jsonify({"status": "error", "message": "Student data file not found"}), 500
 
@@ -56,26 +93,39 @@ def attend():
     except Exception as e:
         return jsonify({"status": "error", "message": f"Error reading student data: {str(e)}"}), 500
 
-    matched = df[df['student_id'].astype(str) == student_id]
+    # Ensure 'section' column exists
+    if 'section' not in df.columns:
+        return jsonify({"status": "error", "message": "Section column missing in Excel"}), 500
+
+    # Match student in the correct section
+    matched = df[
+        (df['student_id'].astype(str) == student_id) &
+        (df['section'].astype(str).str.lower() == section.lower())
+    ]
 
     if not matched.empty:
         student = matched.iloc[0]
         student_name = f"{student['first_name'].title()} {student['last_name'].title()}"
-        recent_scans[student_id] = now
+
+        # Record attendance
+        current_session["last_scanned_id"] = student_id
+        current_session["scanned_ids"].add(student_id)
+
         scan_history.insert(0, (time.strftime('%I:%M:%S %p'), student_id, student_name, "success"))
         scan_history[:] = scan_history[:5]
+
         return jsonify({
             "status": "success",
             "message": f"✅ Attendance recorded for {student_name}",
             "recent_scans": scan_history
         })
 
-    # If not found
-    recent_scans[student_id] = now
+    # Student not found in section
+    current_session["last_scanned_id"] = student_id
     scan_history.insert(0, (time.strftime('%I:%M:%S %p'), student_id, "Unknown", "error"))
     scan_history[:] = scan_history[:5]
     return jsonify({
         "status": "error",
-        "message": "❌ Student not found",
+        "message": "❌ Student not found in this section",
         "recent_scans": scan_history
     }), 404
