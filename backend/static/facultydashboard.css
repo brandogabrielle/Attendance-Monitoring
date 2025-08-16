@@ -111,3 +111,30 @@ body {
 .box h2, .box h3 {
   margin-top: 0;
 }
+
+/* Table styling */
+#recent-scans {
+  border-collapse: collapse;
+  width: 100%;
+  text-align: center;
+}
+
+#recent-scans th {
+  background-color: #9ec9a3;
+  color: black;
+  padding: 10px;
+}
+
+#recent-scans td {
+  padding: 10px;
+  border: 1px solid #ddd;
+}
+
+/* Alternating row colors */
+#recent-scans tr:nth-child(even) td {
+  background-color: #edeff5;
+}
+
+#recent-scans tr:nth-child(odd) td {
+  background-color: #9ec9a3;
+}

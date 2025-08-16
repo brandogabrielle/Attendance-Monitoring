@@ -14,35 +14,31 @@
       <a class="main-icon">
         <img src="{{ url_for('static', filename='udmlogo.jpeg') }}" alt="Main Logo" class="sidebar-image">
       </a>
-      <a href="{{ url_for('faculty.faculty_dashboard') }}" class="sidebar-icon"><i class="fas fa-home"></i></a>
-      <a href="#" class="sidebar-icon"><i class="fas fa-list"></i></a>
-      <a href="#" class="sidebar-icon"><i class="fas fa-qrcode"></i></a>
+      <a href="home.html" class="sidebar-icon"><i class="fas fa-home"></i></a>
+      <a href="list.html" class="sidebar-icon"><i class="fas fa-list"></i></a>
+      <a href="scanner.html" class="sidebar-icon"><i class="fas fa-qrcode"></i></a>
       <a href="#" class="sidebar-icon"><i class="fas fa-question"></i></a>
     </div>
     <div class="sidebar-bottom">
-      <a href="#" class="sidebar-icon"><i class="fas fa-cog"></i></a>
+      <a href="settings.html" class="sidebar-icon"><i class="fas fa-cog"></i></a>
     </div>
   </div>
 
   <!-- Top White Bar -->
   <div class="top-bar"></div>
+<!-- Main Content -->
+<div class="main-content">
 
-  <!-- Main Content -->
-  <div class="main-content">
-    <h3>Welcome, {{ faculty_name }}</h3>
-    <p><strong>Faculty ID:</strong> {{ faculty_id }}</p>
-    <p><strong>Section:</strong> {{ section }}</p>
-    <p><strong>Subject:</strong> {{ subject }}</p>
+  <div class="content-wrapper">
+    <!-- QR Scanner Box -->
+    <div class="box">
+      <h2>📷 Attendance Scanner</h2>
+      <div id="reader" style="width: 350px;"></div>
+      <p id="scan-result">Waiting for QR code...</p>
+      <div id="message" style="font-weight: bold; margin-top: 1em;"></div>
+    </div>
 
-    <div class="content-wrapper">
-      <!-- QR Scanner Box -->
-      <div class="box">
-        <h2>📷 Attendance Scanner</h2>
-        <div id="reader" style="width: 350px;"></div>
-        <p id="scan-result">Waiting for QR code...</p>
-        <div id="message" style="font-weight: bold; margin-top: 1em;"></div>
-
-        <!-- Start Attendance -->
+     <!-- Start Attendance -->
         <h2>🎯 Start Attendance Session</h2>
         <label for="subject">Subject:</label>
         <select id="subject">
@@ -62,15 +58,23 @@
         <p id="session-status" style="color: green; font-weight: bold;"></p>
       </div>
 
-      <!-- Recent Scans Box -->
-      <div class="box">
-        <h3>📜 Recent Scans</h3>
-        <table border="1" id="recent-scans">
-          <tr><th>Time</th><th>Student ID</th><th>Name</th><th>Status</th></tr>
-        </table>
-      </div>
-    </div>
+    <!-- Recent Scans Box -->
+<div class="box">
+  <h3>Attendance Logs</h3>
+  <table id="recent-scans">
+    <tr>
+      <th>Time</th>
+      <th>Student ID</th>
+      <th>Name</th>
+      <th>Status</th>
+    </tr>
+    <!-- Rows will be added here dynamically from database -->
+  </table>
+</div>
+
   </div>
+
+</div>
 
   <script>
     let currentSubject = "";
