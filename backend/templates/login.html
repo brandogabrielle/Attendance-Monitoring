@@ -2,19 +2,41 @@
 <html>
 <head>
     <title>Login</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='design.css') }}"> 
 </head>
 <body>
-    <h2>Login</h2>
-    <form method="POST">
-        <label>Username: <input type="text" name="username"></label><br>
-        <label>Password: <input type="password" name="password"></label><br>
-        <label>Role:
-            <select name="role">
-                <option value="faculty">Faculty</option>
-                <option value="admin">Admin</option>
-            </select>
-        </label><br>
-        <button type="submit">Login</button>
-    </form>
+	<div class="login-box">
+		<img src="{{ url_for('static', filename='udmlogo.jpeg') }}" alt="Logo" class="login-logo">
+    		<h2>Login</h2>
+    		<p class="login-subtitle">Enter your username and password below</p>
+    		<form method="POST">
+        		<label>Username: <input type="text" name="username" placeholder="Username"></label><br>
+        		<label>Password:</label>
+			<div class="password-wrapper">
+    				<input type="password" name="password" id="password" placeholder="Password">
+    				<span id="togglePassword" onclick="togglePassword()">🫣</span>
+			</div><br>
+        		<label>Role:
+            			<select name="role">
+                			<option value="faculty">Faculty</option>
+                			<option value="admin">Admin</option>
+            			</select>
+        		</label><br>
+        		<button type="submit">Login</button>
+    		</form>
+	</div>
+	<script>
+		function togglePassword() {
+    			const passwordInput = document.getElementById("password");
+    			const toggleIcon = document.getElementById("togglePassword");
+    			if (passwordInput.type === "password") {
+        			passwordInput.type = "text";
+        			toggleIcon.textContent = "🤪";
+    			} else {
+        			passwordInput.type = "password";
+        			toggleIcon.textContent = "🫣";
+    			}
+		}
+	</script>
 </body>
 </html>

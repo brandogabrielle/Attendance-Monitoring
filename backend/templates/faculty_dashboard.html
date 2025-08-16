@@ -4,137 +4,152 @@
   <title>Faculty Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://unpkg.com/html5-qrcode"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='facultydashboard.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
-  <h1>📊 Faculty Dashboard</h1>
-  <h3>Welcome, {{ faculty_name }}</h3>
-  <p><strong>Faculty ID:</strong> {{ faculty_id }}</p>
-  <p><strong>Section:</strong> {{ section }}</p>
-  <p><strong>Subject:</strong> {{ subject }}</p>
+  <!-- Left Green Bar -->
+  <div class="sidebar">
+    <div class="sidebar-top">
+      <a class="main-icon">
+        <img src="{{ url_for('static', filename='udmlogo.jpeg') }}" alt="Main Logo" class="sidebar-image">
+      </a>
+      <a href="{{ url_for('faculty.faculty_dashboard') }}" class="sidebar-icon"><i class="fas fa-home"></i></a>
+      <a href="#" class="sidebar-icon"><i class="fas fa-list"></i></a>
+      <a href="#" class="sidebar-icon"><i class="fas fa-qrcode"></i></a>
+      <a href="#" class="sidebar-icon"><i class="fas fa-question"></i></a>
+    </div>
+    <div class="sidebar-bottom">
+      <a href="#" class="sidebar-icon"><i class="fas fa-cog"></i></a>
+    </div>
+  </div>
 
-  <hr>
-  
+  <!-- Top White Bar -->
+  <div class="top-bar"></div>
 
-  <!-- QR Scanner -->
-  <h2>📷 Attendance Scanner</h2>
-  <div id="reader" style="width: 350px;"></div>
-  <p id="scan-result">Waiting for QR code...</p>
-  <div id="message" style="font-weight: bold; margin-top: 1em;"></div>
+  <!-- Main Content -->
+  <div class="main-content">
+    <h3>Welcome, {{ faculty_name }}</h3>
+    <p><strong>Faculty ID:</strong> {{ faculty_id }}</p>
+    <p><strong>Section:</strong> {{ section }}</p>
+    <p><strong>Subject:</strong> {{ subject }}</p>
 
-  <hr>
-  <hr>
+    <div class="content-wrapper">
+      <!-- QR Scanner Box -->
+      <div class="box">
+        <h2>📷 Attendance Scanner</h2>
+        <div id="reader" style="width: 350px;"></div>
+        <p id="scan-result">Waiting for QR code...</p>
+        <div id="message" style="font-weight: bold; margin-top: 1em;"></div>
 
-<!-- Start Attendance -->
-<h2>🎯 Start Attendance Session</h2>
-<label for="subject">Subject:</label>
-<select id="subject">
-  <option value="">--Select Subject--</option>
-  <option value="Math 101">Math 101</option>
-  <option value="Physics 201">Physics 201</option>
-</select>
+        <!-- Start Attendance -->
+        <h2>🎯 Start Attendance Session</h2>
+        <label for="subject">Subject:</label>
+        <select id="subject">
+          <option value="">--Select Subject--</option>
+          <option value="Math 101">Math 101</option>
+          <option value="Physics 201">Physics 201</option>
+        </select>
 
-<label for="section">Section:</label>
-<select id="section">
-  <option value="">--Select Section--</option>
-  <option value="Section A">Section A</option>
-  <option value="Section B">Section B</option>
-</select>
+        <label for="section">Section:</label>
+        <select id="section">
+          <option value="">--Select Section--</option>
+          <option value="Section A">Section A</option>
+          <option value="Section B">Section B</option>
+        </select>
 
-<button id="start-session">Start Attendance</button>
-<p id="session-status" style="color: green; font-weight: bold;"></p>
+        <button id="start-session">Start Attendance</button>
+        <p id="session-status" style="color: green; font-weight: bold;"></p>
+      </div>
 
-<hr>
-
-  <!-- Recent Scans -->
-  <div>
-    <h3>📜 Recent Scans</h3>
-    <table border="1" id="recent-scans">
-      <tr><th>Time</th><th>Student ID</th><th>Name</th><th>Status</th></tr>
-    </table>
+      <!-- Recent Scans Box -->
+      <div class="box">
+        <h3>📜 Recent Scans</h3>
+        <table border="1" id="recent-scans">
+          <tr><th>Time</th><th>Student ID</th><th>Name</th><th>Status</th></tr>
+        </table>
+      </div>
+    </div>
   </div>
 
   <script>
-  let currentSubject = "";
-  let currentSection = "";
+    let currentSubject = "";
+    let currentSection = "";
 
-  document.getElementById("start-session").addEventListener("click", () => {
-    const subject = document.getElementById("subject").value;
-    const section = document.getElementById("section").value;
+    document.getElementById("start-session").addEventListener("click", () => {
+      const subject = document.getElementById("subject").value;
+      const section = document.getElementById("section").value;
 
-    if (!subject || !section) {
-      alert("Please select both subject and section before starting attendance.");
-      return;
-    }
-
-    // Save selections
-    currentSubject = subject;
-    currentSection = section;
-
-    // Notify backend to start a session
-    fetch('/faculty/start_session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ subject, section })
-    })
-    .then(res => res.json())
-    .then(result => {
-      document.getElementById("session-status").innerText = result.message || "Session started!";
-    })
-    .catch(err => console.error(err));
-  });
-
-  function updateRecentScans(scans) {
-    const table = document.getElementById('recent-scans');
-    table.innerHTML = "<tr><th>Time</th><th>Student ID</th><th>Name</th><th>Status</th></tr>";
-    scans.forEach(([time, id, name, status]) => {
-      const row = document.createElement('tr');
-      let color;
-      if (status === "success") color = "green";
-      else if (status === "error") color = "red";
-      else if (status === "cooldown") color = "orange";
-      row.innerHTML = `<td>${time}</td><td>${id}</td><td>${name}</td><td style="color:${color}">${status}</td>`;
-      table.appendChild(row);
-    });
-  }
-
-  function onScanSuccess(decodedText) {
-    try {
-      const qrData = JSON.parse(decodedText);
-
-      if (!currentSubject || !currentSection) {
-        alert("Please start a session before scanning.");
+      if (!subject || !section) {
+        alert("Please select both subject and section before starting attendance.");
         return;
       }
 
-      // Merge subject & section into scan data
-      const data = {
-        ...qrData,
-        subject: currentSubject,
-        section: currentSection
-      };
+      currentSubject = subject;
+      currentSection = section;
 
-      fetch('/faculty/attend', {
+      fetch('/faculty/start_session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify({ subject, section })
       })
       .then(res => res.json())
       .then(result => {
-        document.getElementById('message').innerText = result.message;
-        updateRecentScans(result.recent_scans || []);
+        document.getElementById("session-status").innerText = result.message || "Session started!";
+      })
+      .catch(err => console.error(err));
+    });
+
+    function updateRecentScans(scans) {
+      const table = document.getElementById('recent-scans');
+      table.innerHTML = "<tr><th>Time</th><th>Student ID</th><th>Name</th><th>Status</th></tr>";
+      scans.forEach(([time, id, name, status]) => {
+        const row = document.createElement('tr');
+        let color;
+        if (status === "success") color = "green";
+        else if (status === "error") color = "red";
+        else if (status === "cooldown") color = "orange";
+        row.innerHTML = `<td>${time}</td><td>${id}</td><td>${name}</td><td style="color:${color}">${status}</td>`;
+        table.appendChild(row);
       });
-    } catch (e) {
-      alert("Invalid QR Code");
     }
-  }
 
-  let html5QrcodeScanner = new Html5QrcodeScanner(
-    "reader",
-    { fps: 10, qrbox: 250 },
-    false
-  );
-  html5QrcodeScanner.render(onScanSuccess);
-</script>
+    function onScanSuccess(decodedText) {
+      try {
+        const qrData = JSON.parse(decodedText);
 
+        if (!currentSubject || !currentSection) {
+          alert("Please start a session before scanning.");
+          return;
+        }
+
+        const data = {
+          ...qrData,
+          subject: currentSubject,
+          section: currentSection
+        };
+
+        fetch('/faculty/attend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(result => {
+          document.getElementById('message').innerText = result.message;
+          updateRecentScans(result.recent_scans || []);
+        });
+      } catch (e) {
+        alert("Invalid QR Code");
+      }
+    }
+
+    let html5QrcodeScanner = new Html5QrcodeScanner(
+      "reader",
+      { fps: 10, qrbox: 250 },
+      false
+    );
+    html5QrcodeScanner.render(onScanSuccess);
+  </script>
 </body>
 </html>
