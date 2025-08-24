@@ -1,25 +1,13 @@
-# backend/utils/auth_decorators.py
 from functools import wraps
-from flask import session, redirect, url_for, flash
-
-def login_required(f):
-    """Decorator to ensure the user is logged in."""
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if "username" not in session:
-            flash("Please log in first", "warning")
-            return redirect(url_for("auth.login"))
-        return f(*args, **kwargs)
-    return decorated_function
+from flask import session, redirect, url_for
 
 def role_required(role):
-    """Decorator to ensure the user has a specific role."""
-    def wrapper(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            if session.get("role") != role:
-                flash("Unauthorized access", "danger")
-                return redirect(url_for("auth.login"))
-            return f(*args, **kwargs)
-        return decorated_function
+    """Decorator to restrict access based on user role."""
+    def wrapper(fn):
+        @wraps(fn)
+        def decorated_view(*args, **kwargs):
+            if 'role' not in session or session['role'] != role:
+                return redirect(url_for('auth.login'))
+            return fn(*args, **kwargs)
+        return decorated_view
     return wrapper

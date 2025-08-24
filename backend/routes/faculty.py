@@ -1,10 +1,16 @@
 # backend/routes/faculty.py
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, session, request, jsonify
+from backend.utils.auth_decorators import role_required
 import pandas as pd
 import os
 import time
 
 faculty_bp = Blueprint('faculty', __name__, url_prefix='/faculty')
+
+@role_required('faculty')
+def faculty_dashboard():
+    return render_template('faculty_dashboard.html', username=session['username'])
+
 
 # Attendance session state
 current_session = {

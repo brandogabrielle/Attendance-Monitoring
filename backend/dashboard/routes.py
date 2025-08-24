@@ -22,3 +22,8 @@ def faculty_dashboard():
 @role_required('admin')
 def admin_dashboard():
     return render_template('admin_dashboard.html', username=session['username'])
+
+@dashboard_bp.route('/registrar')
+@role_required('registrar')
+def registrar_dashboard():
+    return render_template('registrar_dashboard.html', username=session['username'])
