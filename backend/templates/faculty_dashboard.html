@@ -118,42 +118,62 @@
       });
     }
 
-    function onScanSuccess(decodedText) {
-      try {
-        const qrData = JSON.parse(decodedText);
+    let lastQrData = null;
+    let lastScanTime = 0;
+    const cooldown = 2000; // 2 seconds debounce
 
-        if (!currentSubject || !currentSection) {
-          alert("Please start a session before scanning.");
+    function onScanSuccess(decodedText) {
+        const now = Date.now();
+
+        // 1️⃣ Ignore repeated scans within cooldown
+        if (decodedText === lastQrData && now - lastScanTime < cooldown) {
           return;
         }
 
-        const data = {
-          ...qrData,
-          subject: currentSubject,
-          section: currentSection
-        };
+        lastQrData = decodedText;
+        lastScanTime = now;
 
-        fetch('/faculty/attend', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        })
-        .then(res => res.json())
-        .then(result => {
-          document.getElementById('message').innerText = result.message;
-          updateRecentScans(result.recent_scans || []);
-        });
-      } catch (e) {
-        alert("Invalid QR Code");
+        try {
+          const qrData = JSON.parse(decodedText);
+
+          if (!currentSubject || !currentSection) {
+            alert("Please start a session before scanning.");
+            return;
+          }
+
+          const data = { ...qrData, subject: currentSubject, section: currentSection };
+
+          fetch('/faculty/attend', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          })
+          .then(res => res.json())
+          .then(result => {
+            document.getElementById('message').innerText = result.message;
+            updateRecentScans(result.recent_scans || []);
+          });
+
+        } catch (e) {
+          alert("Invalid QR Code");
+        }
       }
-    }
 
-    let html5QrcodeScanner = new Html5QrcodeScanner(
-      "reader",
-      { fps: 10, qrbox: 250 },
-      false
-    );
-    html5QrcodeScanner.render(onScanSuccess);
+      // Initialize HTML5 QR Code Scanner with auto-pause
+      let html5QrcodeScanner = new Html5QrcodeScanner(
+        "reader",
+        { fps: 10, qrbox: 250 },
+        false
+      );
+
+      // Wrap onScanSuccess with pause/resume to prevent rapid firing
+      html5QrcodeScanner.render((decodedText, result) => {
+        onScanSuccess(decodedText);
+
+        html5QrcodeScanner.pause(); // pause immediately after a scan
+        setTimeout(() => html5QrcodeScanner.resume(), 1000); // resume after 1s
+      });
+
   </script>
 </body>
 </html>
